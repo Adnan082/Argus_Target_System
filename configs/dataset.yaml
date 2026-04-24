@@ -1,0 +1,14 @@
+# ARGUS YOLOv8 Dataset Configuration
+# 5 coarse classes collapsed from xView's 60
+
+path: /home/ec2-user/data
+train: images/train
+val: images/val
+
+nc: 5
+names:
+  0: tank
+  1: large_vehicle
+  2: naval_vessel
+  3: aircraft
+  4: structure

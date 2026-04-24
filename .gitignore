@@ -1,0 +1,32 @@
+# Virtual environment
+argus-env/
+
+# Data (too large for git)
+data/
+*.zip
+*.tif
+*.tiff
+
+# Model weights
+*.pt
+*.onnx
+
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# AWS credentials
+credentials.csv
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
