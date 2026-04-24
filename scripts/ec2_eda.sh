@@ -22,7 +22,7 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --output text)
 
 # Install dependencies
-pip3 install jupyter nbconvert matplotlib pillow numpy boto3
+python3 -m pip install jupyter nbconvert matplotlib pillow numpy boto3
 
 # Clone repo using token for push access
 git clone https://Adnan082:${GITHUB_TOKEN}@github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
