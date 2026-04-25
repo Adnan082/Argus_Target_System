@@ -16,7 +16,7 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --secret-id argus/github-pat \
     --region $REGION \
     --query SecretString \
-    --output text)
+    --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 
 # System installs
 dnf install -y git python3-pip p7zip
