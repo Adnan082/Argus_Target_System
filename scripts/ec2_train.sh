@@ -1,6 +1,6 @@
 #!/bin/bash
 # EC2 bootstrap: pull processed dataset from S3, train YOLOv8, push model to S3
-# Launch with: 100GB EBS, GPU instance (g4dn.xlarge or larger), IAM role ec2-s3-access
+# Launch with: Deep Learning Base AMI (Amazon Linux 2023), g4dn.xlarge, 100GB EBS, IAM role ec2-s3-access
 set -e
 
 BUCKET="s3://argus-training-data-890615325560-us-east-1-an"
@@ -20,11 +20,12 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --query SecretString \
     --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 
-# System installs
-dnf install -y git python3-pip
+# Activate PyTorch conda env (pre-installed on Deep Learning AMI)
+source /opt/conda/etc/profile.d/conda.sh
+conda activate pytorch
 
-# Python packages
-python3 -m pip install --ignore-installed ultralytics boto3
+# Install ultralytics into the active conda env
+pip install ultralytics boto3 --quiet
 
 # Clone repo
 git clone https://Adnan082:${GITHUB_TOKEN}@github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
@@ -35,14 +36,17 @@ echo "=== Downloading processed dataset: $(date) ==="
 mkdir -p data/processed
 aws s3 sync $BUCKET/processed/ data/processed/
 
-# Run training — dataset.yaml was written by preprocessing with the correct path
+# Run training
 echo "=== Running training: $(date) ==="
-python3 src/training/train.py \
+python src/training/train.py \
     --data data/processed/dataset.yaml \
+    --model yolov8s.pt \
     --epochs 100 \
-    --batch 16 \
+    --batch 32 \
+    --workers 4 \
+    --device 0 \
     --name argus-v1 \
-    --s3-bucket argus-training-data-890615325560-us-east-1-an
+    --s3-bucket $BUCKET
 
 echo "=== Training complete: $(date) ==="
 
