@@ -56,32 +56,20 @@ def test_converter():
         geojson = {
             "features": [
                 {
-                    "properties": {"image_id": "001.tif", "type_id": 71},  # tank
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[10, 10], [40, 10], [40, 40], [10, 40], [10, 10]]],
-                    },
+                    "properties": {"image_id": "001.tif", "type_id": 71, "bounds_imcoords": "10,10,40,40"},  # tank
+                    "geometry": {"type": "Polygon", "coordinates": [[]]},
                 },
                 {
-                    "properties": {"image_id": "001.tif", "type_id": 23},  # large_vehicle
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[100, 100], [150, 100], [150, 150], [100, 150], [100, 100]]],
-                    },
+                    "properties": {"image_id": "001.tif", "type_id": 23, "bounds_imcoords": "100,100,150,150"},  # large_vehicle
+                    "geometry": {"type": "Polygon", "coordinates": [[]]},
                 },
                 {
-                    "properties": {"image_id": "002.tif", "type_id": 999},  # unknown — should be skipped
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[5, 5], [20, 5], [20, 20], [5, 20], [5, 5]]],
-                    },
+                    "properties": {"image_id": "002.tif", "type_id": 999, "bounds_imcoords": "5,5,20,20"},  # unknown — should be skipped
+                    "geometry": {"type": "Polygon", "coordinates": [[]]},
                 },
                 {
-                    "properties": {"image_id": "missing.tif", "type_id": 71},  # no image file
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[5, 5], [20, 5], [20, 20], [5, 20], [5, 5]]],
-                    },
+                    "properties": {"image_id": "missing.tif", "type_id": 71, "bounds_imcoords": "5,5,20,20"},  # no image file
+                    "geometry": {"type": "Polygon", "coordinates": [[]]},
                 },
             ]
         }

@@ -1,26 +1,50 @@
 #!/bin/bash
-# EC2 bootstrap: pull processed data from S3, train YOLOv8, push model to S3
+# EC2 bootstrap: pull processed dataset from S3, train YOLOv8, push model to S3
+# Launch with: 100GB EBS, GPU instance (g4dn.xlarge or larger), IAM role ec2-s3-access
 set -e
 
 BUCKET="s3://argus-training-data-890615325560-us-east-1-an"
+REGION="us-east-1"
 
-# Install dependencies
-pip install ultralytics boto3
+# Capture instance ID before redirecting output
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
 
-# Pull repo
-git clone https://github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
+exec > /tmp/train.log 2>&1
+echo "=== ARGUS Training started: $(date) ==="
+
+# GitHub PAT from Secrets Manager
+GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
+    --secret-id argus/github-pat \
+    --region $REGION \
+    --query SecretString \
+    --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+
+# System installs
+dnf install -y git python3-pip
+
+# Python packages
+python3 -m pip install --ignore-installed ultralytics boto3
+
+# Clone repo
+git clone https://Adnan082:${GITHUB_TOKEN}@github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
 cd /home/ec2-user/argus
 
 # Pull processed dataset from S3
+echo "=== Downloading processed dataset: $(date) ==="
 mkdir -p data/processed
 aws s3 sync $BUCKET/processed/ data/processed/
 
-# Run training
-python src/training/train.py \
-    --data configs/dataset.yaml \
+# Run training — dataset.yaml was written by preprocessing with the correct path
+echo "=== Running training: $(date) ==="
+python3 src/training/train.py \
+    --data data/processed/dataset.yaml \
     --epochs 100 \
     --batch 16 \
     --name argus-v1 \
     --s3-bucket argus-training-data-890615325560-us-east-1-an
 
-echo "Training complete"
+echo "=== Training complete: $(date) ==="
+
+# Self-terminate
+aws ec2 terminate-instances --instance-ids $INSTANCE_ID --region $REGION

@@ -82,12 +82,12 @@ def convert_xview_to_yolo(
                 continue
 
             class_idx = XVIEW_TO_ARGUS[type_id]
-            coords = feature["geometry"]["coordinates"][0]
 
-            xs = [c[0] for c in coords]
-            ys = [c[1] for c in coords]
-            x_min, x_max = min(xs), max(xs)
-            y_min, y_max = min(ys), max(ys)
+            # bounds_imcoords is pixel space "x1,y1,x2,y2" — geometry.coordinates is geographic (lon/lat)
+            bounds = props.get("bounds_imcoords", "")
+            if not bounds:
+                continue
+            x_min, y_min, x_max, y_max = map(float, bounds.split(","))
 
             cx = ((x_min + x_max) / 2) / img_w
             cy = ((y_min + y_max) / 2) / img_h
