@@ -22,6 +22,7 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --output text)
 
 # Install dependencies
+sudo dnf install -y git python3-pip p7zip
 python3 -m pip install jupyter nbconvert matplotlib pillow numpy boto3
 
 # Clone repo using token for push access
@@ -37,7 +38,7 @@ aws s3 cp $BUCKET/xview/train_labels.zip data/raw/
 aws s3 cp $BUCKET/xview/train_images.zip data/raw/
 
 unzip -q data/raw/train_labels.zip -d data/raw/train_labels
-unzip -q data/raw/train_images.zip  -d data/raw/train_images
+7za x data/raw/train_images.zip -o data/raw/train_images -y
 
 # Run notebook headlessly — saves all plot outputs inline
 echo "=== Running EDA notebook: $(date) ==="
