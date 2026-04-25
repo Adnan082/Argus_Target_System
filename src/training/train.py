@@ -45,7 +45,7 @@ def main():
         batch=args.batch,
         workers=args.workers,
         device=args.device,
-        patience=20,
+        patience=10,
         plots=True,
         save=True,
     )
