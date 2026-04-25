@@ -56,7 +56,7 @@ echo "=== Running EDA: $(date) ==="
 
 # Push results to GitHub
 echo "=== Pushing to GitHub: $(date) ==="
-git add notebooks/01_xview_eda.ipynb notebooks/plots/
+git add notebooks/
 git commit -m "EDA results: xView dataset analysis [automated EC2 run $(date +%Y-%m-%d)]"
 git push
 
