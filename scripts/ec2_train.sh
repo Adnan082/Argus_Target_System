@@ -1,17 +1,16 @@
 #!/bin/bash
 # EC2 bootstrap: pull processed dataset from S3, train YOLOv8, push model to S3
 # Launch with: Deep Learning Base AMI (Amazon Linux 2023), g4dn.xlarge, 100GB EBS, IAM role ec2-s3-access
+exec > /tmp/train.log 2>&1
 set -e
+echo "=== ARGUS Training started: $(date) ==="
 
 BUCKET="s3://argus-training-data-890615325560-us-east-1-an"
 REGION="us-east-1"
 
-# Capture instance ID before redirecting output
+# Capture instance ID
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
-
-exec > /tmp/train.log 2>&1
-echo "=== ARGUS Training started: $(date) ==="
 
 # GitHub PAT from Secrets Manager
 GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
@@ -20,12 +19,8 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --query SecretString \
     --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 
-# Activate PyTorch conda env (pre-installed on Deep Learning AMI)
-source /opt/conda/etc/profile.d/conda.sh
-conda activate pytorch
-
-# Install ultralytics into the active conda env
-pip install ultralytics boto3 --quiet
+# Install dependencies (Deep Learning Base AMI has Python3 + CUDA but no conda envs)
+pip3 install ultralytics boto3 --quiet
 
 # Clone repo
 git clone https://Adnan082:${GITHUB_TOKEN}@github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
@@ -38,7 +33,7 @@ aws s3 sync $BUCKET/processed/ data/processed/
 
 # Run training
 echo "=== Running training: $(date) ==="
-python src/training/train.py \
+python3 src/training/train.py \
     --data data/processed/dataset.yaml \
     --model yolov8s.pt \
     --epochs 100 \
