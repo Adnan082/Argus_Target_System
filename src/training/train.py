@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument("--data",    default="data/processed/dataset.yaml")
     parser.add_argument("--model",   default="yolov8s.pt", help="yolov8n/s/m/l/x.pt")
     parser.add_argument("--epochs",  type=int, default=100)
-    parser.add_argument("--batch",   type=int, default=32)
+    parser.add_argument("--batch",   type=int, default=8)
     parser.add_argument("--imgsz",   type=int, default=640)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--device",  default="0", help="GPU device index, or 'cpu'")
