@@ -1,7 +1,7 @@
 #!/bin/bash
 # EC2 bootstrap: pull processed dataset from S3, train YOLOv8, push model to S3
-# Launch with: Amazon Linux 2023 AMI, g5.xlarge, IAM role ec2-s3-access
-# Storage: Volume 1 (root, 8GB) = OS only | Volume 2 (250GB) = everything else
+# Launch with: Deep Learning Base AMI with Single CUDA (Amazon Linux 2023), g4dn.xlarge, IAM role ec2-s3-access
+# Storage: Volume 1 (root, 30GB) = OS + CUDA drivers | Volume 2 (125GB) = packages + dataset + outputs
 exec > /tmp/train.log 2>&1
 set -e
 echo "=== ARGUS Training started: $(date) ==="
