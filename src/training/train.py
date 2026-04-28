@@ -35,6 +35,18 @@ def upload_to_s3(local_path, bucket, key):
     logger.info(f"Uploaded {local_path} → s3://{bucket}/{key}")
 
 
+def upload_run_to_s3(run_dir, bucket, s3_prefix):
+    import boto3
+    s3 = boto3.client("s3")
+    run_dir = Path(run_dir)
+    for local_file in run_dir.rglob("*"):
+        if local_file.is_file():
+            relative = local_file.relative_to(run_dir)
+            key = f"{s3_prefix}/{relative}"
+            s3.upload_file(str(local_file), bucket, key)
+            logger.info(f"Uploaded {local_file} → s3://{bucket}/{key}")
+
+
 def main():
     args = parse_args()
     from ultralytics import YOLO
@@ -78,16 +90,13 @@ def main():
         **common,
     )
 
-    # Upload best weights + results to S3
+    # Upload everything (weights, plots, configs, metrics) from both phases to S3
     if args.s3_bucket:
-        phase2_dir = Path(f"runs/detect/{args.name}-phase2")
-        best_weights = phase2_dir / "weights" / "best.pt"
-
-        if best_weights.exists():
-            upload_to_s3(best_weights, args.s3_bucket, f"models/{args.name}/best.pt")
-
-        for plot in phase2_dir.glob("*.png"):
-            upload_to_s3(plot, args.s3_bucket, f"models/{args.name}/plots/{plot.name}")
+        bucket = args.s3_bucket.replace("s3://", "").split("/")[0]
+        for phase in ["phase1", "phase2"]:
+            run_dir = Path(f"runs/detect/{args.name}-{phase}")
+            if run_dir.exists():
+                upload_run_to_s3(run_dir, bucket, f"models/{args.name}/{phase}")
 
     logger.info("Training complete.")
 
