@@ -1,6 +1,6 @@
 #!/bin/bash
 # EC2 bootstrap: pull processed dataset from S3, train YOLOv8, push model to S3
-# Launch with: Deep Learning Base AMI (Amazon Linux 2023), g4dn.xlarge, 100GB EBS, IAM role ec2-s3-access
+# Launch with: Deep Learning Base AMI (Amazon Linux 2023), g5.xlarge or larger, 100GB EBS, IAM role ec2-s3-access
 exec > /tmp/train.log 2>&1
 set -e
 echo "=== ARGUS Training started: $(date) ==="
@@ -19,22 +19,43 @@ GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
     --query SecretString \
     --output text | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 
-# Install dependencies (Deep Learning Base AMI has Python3 + CUDA but no conda envs)
+# Mount second EBS volume at /data if attached
+if lsblk | grep -q nvme1n1; then
+    echo "=== Mounting /dev/nvme1n1 at /data ==="
+    if ! blkid /dev/nvme1n1 | grep -q ext4; then
+        mkfs.ext4 /dev/nvme1n1
+    fi
+    mkdir -p /data
+    mount /dev/nvme1n1 /data
+fi
+
+# Redirect pip/yolo tmp writes to /tmp (avoids filling root EBS)
+export TMPDIR=/tmp
+export YOLO_CONFIG_DIR=/tmp/ultralytics
+
+# Install dependencies
 pip3 install ultralytics boto3 --quiet
 
 # Clone repo
 git clone https://Adnan082:${GITHUB_TOKEN}@github.com/Adnan082/Argus_Target_System.git /home/ec2-user/argus
 cd /home/ec2-user/argus
 
-# Pull processed dataset from S3
+# Pull processed dataset from S3 (skip raw label intermediates)
 echo "=== Downloading processed dataset: $(date) ==="
 mkdir -p data/processed
-aws s3 sync $BUCKET/processed/ data/processed/
+aws s3 sync $BUCKET/processed/ data/processed/ \
+    --exclude "yolo_labels_raw/*"
 
-# Run training
+# Fix absolute path in dataset.yaml to match this machine
+DATASET_YAML="data/processed/dataset.yaml"
+sed -i "s|^path:.*|path: $(pwd)/data/processed|" $DATASET_YAML
+echo "=== dataset.yaml path after fix ==="
+grep "^path:" $DATASET_YAML
+
+# Run training — batch 32, safe on A10G (24GB) or larger
 echo "=== Running training: $(date) ==="
 python3 src/training/train.py \
-    --data data/processed/dataset.yaml \
+    --data $DATASET_YAML \
     --model yolov8s.pt \
     --epochs 100 \
     --batch 32 \
