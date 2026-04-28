@@ -13,7 +13,7 @@ REGION="us-east-1"
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
 
-# ── Step 1: Mount second EBS (250GB) BEFORE doing anything else ──────────────
+# ── Step 1: Mount second EBS (125GB) BEFORE doing anything else ──────────────
 echo "=== Mounting second EBS volume ==="
 DATA_DEV=""
 for dev in /dev/nvme1n1 /dev/nvme2n1 /dev/xvdb /dev/sdb; do
