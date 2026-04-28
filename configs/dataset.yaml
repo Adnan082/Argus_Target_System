@@ -1,7 +1,7 @@
 # ARGUS YOLOv8 Dataset Configuration
 # 5 coarse classes collapsed from xView's 60
 
-path: /home/ec2-user/argus/data/processed
+path: /mnt/data/argus/data/processed
 train: images/train
 val: images/val
 
