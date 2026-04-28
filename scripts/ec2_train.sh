@@ -74,7 +74,7 @@ python src/training/train.py \
     --data $DATASET_YAML \
     --model yolov8s.pt \
     --epochs 100 \
-    --batch 16 \
+    --batch 8 \
     --workers 4 \
     --device 0 \
     --name argus-v1 \
